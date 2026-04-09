@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Zoe Dev — Páginas Web que Impactan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;1,9..40,300&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    :root {
+      --lime: #C8FF00;
+      --black: #080808;
+      --white: #F5F5F0;
+      --gray: #1a1a1a;
+      --mid: #2e2e2e;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: 'DM Sans', sans-serif;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* CURSOR */
+    #cursor {
+      width: 14px; height: 14px;
+      background: var(--lime);
+      border-radius: 50%;
+      position: fixed; top: 0; left: 0;
+      pointer-events: none;
+      z-index: 9999;
+      transition: transform 0.15s ease, width 0.2s, height 0.2s;
+      mix-blend-mode: difference;
+    }
+    #cursor-ring {
+      width: 40px; height: 40px;
+      border: 1.5px solid var(--lime);
+      border-radius: 50%;
+      position: fixed; top: 0; left: 0;
+      pointer-events: none;
+      z-index: 9998;
+      transition: transform 0.35s cubic-bezier(.23,1,.32,1), opacity 0.2s;
+      mix-blend-mode: difference;
+    }
+    body:hover #cursor-ring { opacity: 1; }
+
+    /* CANVAS */
+    #bg-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem 3rem;
+      border-bottom: 1px solid rgba(200,255,0,0.1);
+      backdrop-filter: blur(12px);
+      background: rgba(8,8,8,0.6);
+    }
+    .nav-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2rem;
+      letter-spacing: 0.1em;
+      color: var(--lime);
+    }
+    .nav-logo span { color: var(--white); }
+    .nav-links {
+      display: flex;
+      gap: 2.5rem;
+      list-style: none;
+    }
+    .nav-links a {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--white);
+      opacity: 0.6;
+      transition: opacity 0.2s, color 0.2s;
+    }
+    .nav-links a:hover { opacity: 1; color: var(--lime); }
+    .nav-cta {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--black);
+      background: var(--lime);
+      padding: 0.55rem 1.25rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .nav-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(200,255,0,0.3); }
+
+    /* HERO */
+    #hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 3rem;
+      z-index: 1;
+    }
+    .hero-eyebrow {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--lime);
+      margin-bottom: 1.5rem;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.2s forwards;
+    }
+    .hero-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(5rem, 14vw, 13rem);
+      line-height: 0.92;
+      letter-spacing: -0.01em;
+      opacity: 0;
+      animation: fadeUp 0.9s 0.4s forwards;
+    }
+    .hero-title em {
+      font-style: normal;
+      color: transparent;
+      -webkit-text-stroke: 1.5px var(--lime);
+    }
+    .hero-sub {
+      max-width: 420px;
+      margin-top: 2rem;
+      font-size: 1rem;
+      line-height: 1.7;
+      color: rgba(245,245,240,0.55);
+      opacity: 0;
+      animation: fadeUp 0.9s 0.6s forwards;
+    }
+    .hero-actions {
+      margin-top: 3rem;
+      display: flex;
+      gap: 1.25rem;
+      align-items: center;
+      opacity: 0;
+      animation: fadeUp 0.9s 0.8s forwards;
+    }
+    .btn-primary {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.78rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--black);
+      background: var(--lime);
+      padding: 1rem 2rem;
+      display: inline-block;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-primary:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 12px 30px rgba(200,255,0,0.35); }
+    .btn-ghost {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.78rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--white);
+      border: 1px solid rgba(245,245,240,0.25);
+      padding: 1rem 2rem;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-ghost:hover { border-color: var(--lime); color: var(--lime); }
+
+    .hero-badge {
+      position: absolute;
+      right: 4rem;
+      bottom: 5rem;
+      width: 130px; height: 130px;
+      opacity: 0;
+      animation: fadeIn 1s 1.2s forwards, spinSlow 12s 1.2s linear infinite;
+    }
+    .hero-badge svg { width: 100%; height: 100%; }
+
+    .scroll-hint {
+      position: absolute;
+      bottom: 2.5rem;
+      left: 3rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(245,245,240,0.35);
+      opacity: 0;
+      animation: fadeIn 1s 1.4s forwards;
+    }
+    .scroll-line {
+      width: 50px; height: 1px;
+      background: rgba(245,245,240,0.2);
+      position: relative;
+      overflow: hidden;
+    }
+    .scroll-line::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: var(--lime);
+      animation: lineScroll 2s 1.5s ease-in-out infinite;
+    }
+
+    /* MARQUEE */
+    .marquee-section {
+      position: relative; z-index: 1;
+      padding: 1.5rem 0;
+      background: var(--lime);
+      overflow: hidden;
+      border-top: none;
+    }
+    .marquee-track {
+      display: flex;
+      gap: 3rem;
+      white-space: nowrap;
+      animation: marquee 18s linear infinite;
+    }
+    .marquee-item {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.2rem;
+      letter-spacing: 0.15em;
+      color: var(--black);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    .marquee-dot {
+      width: 6px; height: 6px;
+      background: var(--black);
+      border-radius: 50%;
+    }
+
+    /* SERVICES */
+    #servicios {
+      position: relative; z-index: 1;
+      padding: 8rem 3rem;
+    }
+    .section-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--lime);
+      margin-bottom: 1rem;
+    }
+    .section-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(3rem, 6vw, 5.5rem);
+      line-height: 1;
+      margin-bottom: 4rem;
+    }
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5px;
+      background: rgba(200,255,0,0.1);
+    }
+    .service-card {
+      background: var(--black);
+      padding: 3rem 2.5rem;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.3s;
+      border: 1px solid rgba(200,255,0,0.08);
+    }
+    .service-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px; height: 0;
+      background: var(--lime);
+      transition: height 0.4s ease;
+    }
+    .service-card:hover { background: #0f0f0f; }
+    .service-card:hover::before { height: 100%; }
+    .service-num {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: rgba(200,255,0,0.5);
+      margin-bottom: 1.5rem;
+    }
+    .service-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+      display: block;
+    }
+    .service-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2rem;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+    }
+    .service-desc {
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: rgba(245,245,240,0.5);
+    }
+
+    /* 3D SCENE SECTION */
+    #scene-section {
+      position: relative; z-index: 1;
+      height: 80vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    #scene-canvas {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+    }
+    .scene-overlay-text {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      pointer-events: none;
+    }
+    .scene-big {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(4rem, 10vw, 9rem);
+      line-height: 1;
+      color: transparent;
+      -webkit-text-stroke: 1px rgba(200,255,0,0.6);
+    }
+
+    /* ABOUT */
+    #sobre-mi {
+      position: relative; z-index: 1;
+      padding: 8rem 3rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6rem;
+      align-items: center;
+    }
+    .about-visual {
+      position: relative;
+    }
+    .about-card {
+      background: var(--gray);
+      border: 1px solid rgba(200,255,0,0.12);
+      padding: 3rem;
+      position: relative;
+    }
+    .about-card::after {
+      content: '';
+      position: absolute;
+      top: 12px; right: -12px;
+      bottom: -12px; left: 12px;
+      border: 1px solid rgba(200,255,0,0.15);
+      z-index: -1;
+    }
+    .about-emoji { font-size: 4rem; margin-bottom: 1.5rem; display: block; }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    .stat-item { border-top: 1px solid rgba(200,255,0,0.2); padding-top: 1rem; }
+    .stat-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 3rem;
+      color: var(--lime);
+      line-height: 1;
+    }
+    .stat-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(245,245,240,0.4);
+      margin-top: 0.3rem;
+    }
+    .about-content .section-title { margin-bottom: 1.5rem; }
+    .about-text {
+      font-size: 1rem;
+      line-height: 1.8;
+      color: rgba(245,245,240,0.6);
+      margin-bottom: 1rem;
+    }
+    .about-text strong { color: var(--lime); font-weight: 500; }
+    .stack-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-top: 2rem;
+    }
+    .tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--lime);
+      border: 1px solid rgba(200,255,0,0.3);
+      padding: 0.4rem 0.8rem;
+    }
+
+    /* CTA SECTION */
+    #contacto {
+      position: relative; z-index: 1;
+      padding: 10rem 3rem;
+      text-align: center;
+      overflow: hidden;
+    }
+    .cta-bg {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, rgba(200,255,0,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(4rem, 10vw, 9rem);
+      line-height: 0.95;
+      position: relative;
+    }
+    .cta-title em {
+      font-style: normal;
+      color: var(--lime);
+    }
+    .cta-sub {
+      margin: 2rem auto;
+      max-width: 480px;
+      font-size: 1rem;
+      line-height: 1.7;
+      color: rgba(245,245,240,0.5);
+    }
+    .whatsapp-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 1rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.85rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--black);
+      background: var(--lime);
+      padding: 1.25rem 2.5rem;
+      margin-top: 1rem;
+      transition: transform 0.25s, box-shadow 0.25s;
+      position: relative;
+      overflow: hidden;
+    }
+    .whatsapp-btn::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.08);
+      transition: left 0.3s ease;
+    }
+    .whatsapp-btn:hover { transform: translateY(-4px) scale(1.03); box-shadow: 0 16px 40px rgba(200,255,0,0.4); }
+    .whatsapp-btn:hover::before { left: 0; }
+    .wa-icon { width: 22px; height: 22px; }
+
+    /* FOOTER */
+    footer {
+      position: relative; z-index: 1;
+      padding: 2rem 3rem;
+      border-top: 1px solid rgba(200,255,0,0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .footer-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.5rem;
+      color: var(--lime);
+    }
+    .footer-copy {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(245,245,240,0.25);
+    }
+
+    /* ANIMATIONS */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes spinSlow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes marquee {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+    @keyframes lineScroll {
+      0% { left: -100%; }
+      50% { left: 100%; }
+      100% { left: 100%; }
+    }
+    @keyframes floatY {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-15px); }
+    }
+
+    /* REVEAL */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 768px) {
+      nav { padding: 1.2rem 1.5rem; }
+      .nav-links { display: none; }
+      #hero { padding: 0 1.5rem; }
+      .hero-badge { display: none; }
+      #servicios { padding: 5rem 1.5rem; }
+      .services-grid { grid-template-columns: 1fr; }
+      #sobre-mi { grid-template-columns: 1fr; padding: 5rem 1.5rem; gap: 3rem; }
+      #contacto { padding: 6rem 1.5rem; }
+      footer { flex-direction: column; gap: 1rem; text-align: center; }
+    }
+
+    /* ── PORTAFOLIO MODAL ── */
+    #modal-portafolio {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+    #modal-portafolio.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .modal-backdrop {
+      position: absolute; inset: 0;
+      background: rgba(8,8,8,0.92);
+      backdrop-filter: blur(16px);
+    }
+    .modal-inner {
+      position: relative;
+      z-index: 1;
+      width: 92vw;
+      max-width: 1100px;
+      max-height: 88vh;
+      overflow-y: auto;
+      background: #0f0f0f;
+      border: 1px solid rgba(200,255,0,0.15);
+      padding: 3.5rem 3rem;
+      transform: translateY(30px);
+      transition: transform 0.45s cubic-bezier(.23,1,.32,1);
+      scrollbar-width: thin;
+      scrollbar-color: rgba(200,255,0,0.3) transparent;
+    }
+    #modal-portafolio.open .modal-inner {
+      transform: translateY(0);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 3rem;
+      border-bottom: 1px solid rgba(200,255,0,0.1);
+      padding-bottom: 2rem;
+    }
+    .modal-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      line-height: 1;
+    }
+    .modal-title em { color: var(--lime); font-style: normal; }
+    .modal-subtitle {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(245,245,240,0.35);
+      margin-top: 0.5rem;
+    }
+    .modal-close {
+      background: none;
+      border: 1px solid rgba(200,255,0,0.25);
+      color: var(--lime);
+      width: 44px; height: 44px;
+      font-size: 1.2rem;
+      cursor: none;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.2s, transform 0.2s;
+    }
+    .modal-close:hover { background: rgba(200,255,0,0.1); transform: rotate(90deg); }
+
+    /* EMPTY STATE */
+    .portfolio-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 4rem 2rem;
+      position: relative;
+      overflow: hidden;
+      min-height: 340px;
+    }
+    #empty-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+    .empty-icon {
+      font-size: 3.5rem;
+      margin-bottom: 1.5rem;
+      position: relative;
+      animation: floatY 3s ease-in-out infinite;
+    }
+    .empty-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.5rem;
+      margin-bottom: 0.75rem;
+      position: relative;
+    }
+    .empty-desc {
+      font-size: 0.95rem;
+      line-height: 1.7;
+      color: rgba(245,245,240,0.45);
+      max-width: 380px;
+      position: relative;
+    }
+    .empty-coming {
+      margin-top: 2rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--lime);
+      border: 1px solid rgba(200,255,0,0.3);
+      padding: 0.6rem 1.4rem;
+      position: relative;
+      animation: pulseBorder 2.5s ease-in-out infinite;
+    }
+
+    /* GRID DE PROYECTOS (visible cuando haya) */
+    .portfolio-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+    .project-card {
+      border: 1px solid rgba(200,255,0,0.1);
+      background: #141414;
+      overflow: hidden;
+      position: relative;
+      transition: border-color 0.3s, transform 0.3s;
+      cursor: none;
+    }
+    .project-card:hover { border-color: rgba(200,255,0,0.4); transform: translateY(-4px); }
+    .project-preview {
+      width: 100%; height: 180px;
+      background: var(--gray);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    .project-preview iframe {
+      width: 200%; height: 200%;
+      transform: scale(0.5);
+      transform-origin: top left;
+      border: none;
+      pointer-events: none;
+    }
+    .project-info { padding: 1.5rem; }
+    .project-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.4rem;
+      margin-bottom: 0.4rem;
+    }
+    .project-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--lime);
+      opacity: 0.7;
+    }
+    .project-link {
+      display: inline-block;
+      margin-top: 1rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--lime);
+      border-bottom: 1px solid rgba(200,255,0,0.3);
+      padding-bottom: 2px;
+      transition: border-color 0.2s;
+    }
+    .project-link:hover { border-color: var(--lime); }
+
+    @keyframes pulseBorder {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(200,255,0,0); }
+      50% { box-shadow: 0 0 12px 2px rgba(200,255,0,0.15); }
+    }
+    @keyframes floatY {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+
+    @media (max-width: 600px) {
+      .modal-inner { padding: 2rem 1.5rem; }
+      .portfolio-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- CUSTOM CURSOR -->
+  <div id="cursor"></div>
+  <div id="cursor-ring"></div>
+
+  <!-- BACKGROUND 3D -->
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">Zoe<span>.Dev</span></div>
+    <ul class="nav-links">
+      <li><a href="#servicios">Servicios</a></li>
+      <li><a href="#" onclick="abrirPortafolio();return false;">Portafolio</a></li>
+      <li><a href="#sobre-mi">Sobre mí</a></li>
+      <li><a href="#contacto">Contacto</a></li>
+    </ul>
+    <a href="https://wa.me/526634923545" target="_blank" class="nav-cta">Hablemos →</a>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <p class="hero-eyebrow">// Diseño Web · Estado de México · 2025</p>
+    <h1 class="hero-title">
+      TU NEGOCIO<br>
+      <em>EN LÍNEA.</em><br>
+      BRUTAL.
+    </h1>
+    <p class="hero-sub">
+      Hago páginas web que convierten visitantes en clientes. Diseño potente, código limpio, resultados reales — desde el Estado de México para todo México y el mundo.
+    </p>
+    <div class="hero-actions">
+      <a href="https://wa.me/526634923545" target="_blank" class="btn-primary">Quiero mi página →</a>
+      <button onclick="abrirPortafolio()" class="btn-ghost" style="border:none;cursor:none;">Ver portafolio</button>
+    </div>
+
+    <!-- Rotating badge -->
+    <div class="hero-badge">
+      <svg viewBox="0 0 130 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="65" cy="65" r="60" stroke="rgba(200,255,0,0.3)" stroke-width="1"/>
+        <path id="textPath" d="M 65,65 m -50,0 a 50,50 0 1,1 100,0 a 50,50 0 1,1 -100,0" fill="none"/>
+        <text font-family="Space Mono, monospace" font-size="9" fill="#C8FF00" letter-spacing="4">
+          <textPath href="#textPath">ZOE.DEV · PÁGINAS WEB · DISEÑO · CODE · </textPath>
+        </text>
+        <circle cx="65" cy="65" r="6" fill="#C8FF00"/>
+        <circle cx="65" cy="65" r="3" fill="#080808"/>
+      </svg>
+    </div>
+
+    <div class="scroll-hint">
+      <div class="scroll-line"></div>
+      Scroll para explorar
+    </div>
+  </section>
+
+  <!-- MARQUEE -->
+  <div class="marquee-section">
+    <div class="marquee-track">
+      <!-- doubled for seamless loop -->
+      <span class="marquee-item">Diseño Web <span class="marquee-dot"></span></span>
+      <span class="marquee-item">Landing Pages <span class="marquee-dot"></span></span>
+      <span class="marquee-item">E-commerce <span class="marquee-dot"></span></span>
+      <span class="marquee-item">Portafolios <span class="marquee-dot"></span></span>
+      <span class="marquee-item">Apps Web <span class="marquee-dot"></span></span>
+      <span class="marquee-item">Estado de México <span class="marquee-dot"></span></span>
+      <span class="marquee-item">Diseño Web <span class="marquee-dot"></span></span>
+      <span class="marquee-item">Landing Pages <span class="marquee-dot"></span></span>
+      <span class="marquee-item">E-commerce <span class="marquee-dot"></span></span>
+      <span class="marquee-item">Portafolios <span class="marquee-dot"></span></span>
+      <span class="marquee-item">Apps Web <span class="marquee-dot"></span></span>
+      <span class="marquee-item">Estado de México <span class="marquee-dot"></span></span>
+    </div>
+  </div>
+
+  <!-- SERVICIOS -->
+  <section id="servicios">
+    <div class="reveal">
+      <p class="section-label">// Lo que hago</p>
+      <h2 class="section-title">SERVICIOS<br>QUE <em style="color:var(--lime)">IMPACTAN</em></h2>
+    </div>
+    <div class="services-grid reveal">
+      <div class="service-card">
+        <p class="service-num">01</p>
+        <span class="service-icon">⚡</span>
+        <h3 class="service-name">Landing Pages</h3>
+        <p class="service-desc">Páginas de aterrizaje diseñadas para convertir. Rápidas, responsivas y con identidad visual que deja huella.</p>
+      </div>
+      <div class="service-card">
+        <p class="service-num">02</p>
+        <span class="service-icon">🛒</span>
+        <h3 class="service-name">Tiendas Online</h3>
+        <p class="service-desc">Vende tus productos las 24 horas. E-commerce a medida con catálogo, carrito y pagos integrados.</p>
+      </div>
+      <div class="service-card">
+        <p class="service-num">03</p>
+        <span class="service-icon">🎨</span>
+        <h3 class="service-name">Portafolios</h3>
+        <p class="service-desc">Muestra tu trabajo al mundo con un sitio que refleja tu personalidad y nivel profesional.</p>
+      </div>
+      <div class="service-card">
+        <p class="service-num">04</p>
+        <span class="service-icon">🏢</span>
+        <h3 class="service-name">Sitios Corporativos</h3>
+        <p class="service-desc">Presencia digital seria y profesional para empresas, negocios locales y emprendimientos en crecimiento.</p>
+      </div>
+      <div class="service-card">
+        <p class="service-num">05</p>
+        <span class="service-icon">📱</span>
+        <h3 class="service-name">Diseño Responsivo</h3>
+        <p class="service-desc">Todos los sitios se ven perfectos en celular, tablet y computadora. Sin excepciones.</p>
+      </div>
+      <div class="service-card">
+        <p class="service-num">06</p>
+        <span class="service-icon">🔧</span>
+        <h3 class="service-name">Mantenimiento</h3>
+        <p class="service-desc">Actualizaciones, cambios de contenido y soporte para que tu web siempre esté al día.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3D FLOATING SCENE -->
+  <section id="scene-section">
+    <canvas id="scene-canvas"></canvas>
+    <div class="scene-overlay-text">
+      <p class="scene-big">CÓDIGO</p>
+      <p class="scene-big">+ DISEÑO</p>
+      <p class="scene-big">= MAGIA</p>
+    </div>
+  </section>
+
+  <!-- SOBRE MÍ -->
+  <section id="sobre-mi">
+    <div class="about-visual reveal">
+      <div class="about-card">
+        <span class="about-emoji">👋</span>
+        <h3 style="font-family:'Bebas Neue',sans-serif;font-size:2.2rem;margin-bottom:0.5rem;">Zoe</h3>
+        <p style="color:rgba(245,245,240,0.5);font-size:0.9rem;margin-bottom:0.5rem;">Diseñador Web · 17 años</p>
+        <p style="color:rgba(245,245,240,0.5);font-size:0.85rem;">📍 Estado de México</p>
+        <div class="stat-grid">
+          <div class="stat-item">
+            <p class="stat-num">100%</p>
+            <p class="stat-label">Dedicación</p>
+          </div>
+          <div class="stat-item">
+            <p class="stat-num">∞</p>
+            <p class="stat-label">Creatividad</p>
+          </div>
+          <div class="stat-item">
+            <p class="stat-num">24h</p>
+            <p class="stat-label">Respuesta</p>
+          </div>
+          <div class="stat-item">
+            <p class="stat-num">MX</p>
+            <p class="stat-label">Base</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="about-content reveal">
+      <p class="section-label">// Quién soy</p>
+      <h2 class="section-title">JOVEN,<br>HAMBRIENTO,<br><em style="color:var(--lime)">DIFERENTE.</em></h2>
+      <p class="about-text">
+        Soy Zoe, tengo 17 años y vivo en el <strong>Estado de México</strong>. Desde chico me enamoré del código y del diseño — esa combinación explosiva de lógica y creatividad que convierte ideas en experiencias digitales reales.
+      </p>
+      <p class="about-text">
+        Mi misión es simple: que cualquier negocio, chico o grande, tenga una <strong>presencia web que impacte</strong>. Sin plantillas genéricas, sin relleno — solo diseño pensado para tus clientes y tu historia.
+      </p>
+      <div class="stack-tags">
+        <span class="tag">HTML/CSS</span>
+        <span class="tag">JavaScript</span>
+        <span class="tag">Diseño UI/UX</span>
+        <span class="tag">Responsivo</span>
+        <span class="tag">Animaciones</span>
+        <span class="tag">3D Web</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section id="contacto">
+    <div class="cta-bg"></div>
+    <div class="reveal">
+      <h2 class="cta-title">
+        ¿LISTO PARA<br>
+        <em>DESTACAR?</em>
+      </h2>
+      <p class="cta-sub">
+        Mándame un mensaje por WhatsApp y platicamos sin compromiso. Cuéntame tu idea y hacemos realidad tu página web.
+      </p>
+      <a href="https://wa.me/526634923545?text=Hola%20Zoe!%20Vi%20tu%20p%C3%A1gina%20web%20y%20me%20interesa%20un%20proyecto.%20%C2%BFMe%20puedes%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" class="whatsapp-btn">
+        <svg class="wa-icon" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
+        Escribir por WhatsApp
+      </a>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════
+       MODAL PORTAFOLIO
+       Para agregar un proyecto:
+       1. Pon hastaEmptyState = false
+       2. Agrega un .project-card dentro de #projects-grid
+       ══════════════════════════════════════ -->
+  <div id="modal-portafolio" role="dialog" aria-modal="true" aria-label="Portafolio">
+    <div class="modal-backdrop" onclick="cerrarPortafolio()"></div>
+    <div class="modal-inner">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title">MI<br><em>PORTAFOLIO</em></h2>
+          <p class="modal-subtitle">// Proyectos realizados</p>
+        </div>
+        <button class="modal-close" onclick="cerrarPortafolio()" title="Cerrar">✕</button>
+      </div>
+
+      <!-- ── ESTADO VACÍO (se oculta automáticamente cuando hay proyectos) ── -->
+      <div class="portfolio-empty" id="empty-state">
+        <canvas id="empty-canvas"></canvas>
+        <div class="empty-icon">🚧</div>
+        <h3 class="empty-title">Próximamente...</h3>
+        <p class="empty-desc">
+          Estoy trabajando en mis primeros proyectos. Pronto verás aquí las páginas web que voy creando para negocios y emprendimientos.
+        </p>
+        <span class="empty-coming">En construcción</span>
+      </div>
+
+      <!-- ── GRID DE PROYECTOS (agregar cards aquí) ──
+           Ejemplo de card — descomenta y edita cuando tengas proyectos:
+
+      <div class="portfolio-grid" id="projects-grid">
+
+        <div class="project-card">
+          <div class="project-preview">
+            <iframe src="https://URL-DE-TU-PAGINA.com"></iframe>
+          </div>
+          <div class="project-info">
+            <p class="project-tag">Landing Page</p>
+            <h3 class="project-name">Nombre del Proyecto</h3>
+            <a href="https://URL-DE-TU-PAGINA.com" target="_blank" class="project-link">Ver sitio →</a>
+          </div>
+        </div>
+
+      </div>
+      ── -->
+
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo">Zoe.Dev</div>
+    <p class="footer-copy">© 2025 Zoe · Estado de México · Diseño Web</p>
+    <a href="https://wa.me/526634923545" target="_blank" style="font-family:'Space Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--lime);text-decoration:none;">+52 663 492 3545</a>
+  </footer>
+
+  <script>
+  // ── CURSOR ──
+  const cursor = document.getElementById('cursor');
+  const ring   = document.getElementById('cursor-ring');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+  document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+  function animCursor() {
+    cursor.style.transform = `translate(${mx-7}px, ${my-7}px)`;
+    rx += (mx - rx) * 0.12;
+    ry += (my - ry) *.12;
+    ring.style.transform = `translate(${rx-20}px, ${ry-20}px)`;
+    requestAnimationFrame(animCursor);
+  }
+  animCursor();
+  document.querySelectorAll('a, button').forEach(el => {
+    el.addEventListener('mouseenter', () => { cursor.style.transform += ' scale(2)'; });
+    el.addEventListener('mouseleave', () => { cursor.style.transform = cursor.style.transform.replace(' scale(2)', ''); });
+  });
+
+  // ── BG 3D: floating particles + wireframe sphere ──
+  (function() {
+    const canvas = document.getElementById('bg-canvas');
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 200);
+    camera.position.z = 40;
+
+    // Particles
+    const pGeo = new THREE.BufferGeometry();
+    const count = 1800;
+    const pos = new Float32Array(count * 3);
+    for (let i = 0; i < count * 3; i++) pos[i] = (Math.random() - 0.5) * 160;
+    pGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const pMat = new THREE.PointsMaterial({ color: 0xC8FF00, size: 0.18, transparent: true, opacity: 0.35 });
+    scene.add(new THREE.Points(pGeo, pMat));
+
+    // Wireframe torus knot
+    const tGeo = new THREE.TorusKnotGeometry(10, 3, 160, 20);
+    const tMat = new THREE.MeshBasicMaterial({ color: 0xC8FF00, wireframe: true, transparent: true, opacity: 0.04 });
+    const torus = new THREE.Mesh(tGeo, tMat);
+    scene.add(torus);
+
+    // Mouse parallax
+    let tx = 0, ty = 0;
+    document.addEventListener('mousemove', e => {
+      tx = (e.clientX / window.innerWidth  - 0.5) * 8;
+      ty = (e.clientY / window.innerHeight - 0.5) * 8;
+    });
+
+    let camX = 0, camY = 0;
+    function animate(t) {
+      requestAnimationFrame(animate);
+      torus.rotation.x = t * 0.0002;
+      torus.rotation.y = t * 0.0003;
+      camX += (tx - camX) * 0.03;
+      camY += (-ty - camY) * 0.03;
+      camera.position.x = camX;
+      camera.position.y = camY;
+      camera.lookAt(0,0,0);
+      renderer.render(scene, camera);
+    }
+    animate(0);
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  })();
+
+  // ── SCENE 3D: floating geometric shapes ──
+  (function() {
+    const canvas = document.getElementById('scene-canvas');
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    const W = canvas.parentElement.clientWidth;
+    const H = canvas.parentElement.clientHeight;
+    renderer.setSize(W, H);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, W / H, 0.1, 200);
+    camera.position.z = 30;
+
+    const mat = new THREE.MeshBasicMaterial({ color: 0xC8FF00, wireframe: true, transparent: true, opacity: 0.5 });
+    const shapes = [];
+
+    const geos = [
+      new THREE.OctahedronGeometry(4),
+      new THREE.IcosahedronGeometry(3.5, 0),
+      new THREE.TetrahedronGeometry(3),
+      new THREE.OctahedronGeometry(2.5),
+      new THREE.IcosahedronGeometry(2),
+    ];
+
+    geos.forEach((g, i) => {
+      const m = new THREE.Mesh(g, mat.clone());
+      m.position.set(
+        (i - 2) * 12,
+        Math.sin(i * 1.3) * 5,
+        -i * 2
+      );
+      m.userData.speed = 0.4 + i * 0.15;
+      m.userData.phase = i * 1.2;
+      scene.add(m);
+      shapes.push(m);
+    });
+
+    // Grid
+    const grid = new THREE.GridHelper(80, 20, 0x222200, 0x111100);
+    grid.position.y = -15;
+    scene.add(grid);
+
+    function animate(t) {
+      requestAnimationFrame(animate);
+      const s = t * 0.001;
+      shapes.forEach(m => {
+        m.rotation.x = s * m.userData.speed;
+        m.rotation.y = s * m.userData.speed * 0.7;
+        m.position.y = Math.sin(s * m.userData.speed + m.userData.phase) * 6;
+      });
+      renderer.render(scene, camera);
+    }
+    animate(0);
+  })();
+
+  // ── SCROLL REVEAL ──
+  const reveals = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  reveals.forEach(el => io.observe(el));
+  // ── PORTAFOLIO MODAL ──
+  const modal = document.getElementById('modal-portafolio');
+
+  function abrirPortafolio() {
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    initEmptyCanvas();
+  }
+  function cerrarPortafolio() {
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarPortafolio(); });
+
+  // Canvas 3D decorativo del estado vacío
+  let emptyInited = false;
+  function initEmptyCanvas() {
+    if (emptyInited) return;
+    emptyInited = true;
+    const c = document.getElementById('empty-canvas');
+    if (!c) return;
+    const W = c.parentElement.clientWidth;
+    const H = c.parentElement.clientHeight || 340;
+    const ren = new THREE.WebGLRenderer({ canvas: c, alpha: true, antialias: true });
+    ren.setPixelRatio(window.devicePixelRatio);
+    ren.setSize(W, H);
+    const sc = new THREE.Scene();
+    const cam = new THREE.PerspectiveCamera(60, W / H, 0.1, 100);
+    cam.position.z = 18;
+
+    // Floating rings
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0xC8FF00, wireframe: true, transparent: true, opacity: 0.25 });
+    const rings = [];
+    [6, 4, 2.5].forEach((r, i) => {
+      const mesh = new THREE.Mesh(new THREE.TorusGeometry(r, 0.08, 8, 40), ringMat.clone());
+      mesh.rotation.x = Math.PI / 3 * i;
+      mesh.userData.phase = i * 1.1;
+      sc.add(mesh);
+      rings.push(mesh);
+    });
+
+    // Center icosahedron
+    const ico = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(2.2, 0),
+      new THREE.MeshBasicMaterial({ color: 0xC8FF00, wireframe: true, transparent: true, opacity: 0.35 })
+    );
+    sc.add(ico);
+
+    // Particles
+    const pg = new THREE.BufferGeometry();
+    const pp = new Float32Array(300 * 3);
+    for (let i = 0; i < 900; i++) pp[i] = (Math.random() - 0.5) * 40;
+    pg.setAttribute('position', new THREE.BufferAttribute(pp, 3));
+    sc.add(new THREE.Points(pg, new THREE.PointsMaterial({ color: 0xC8FF00, size: 0.12, transparent: true, opacity: 0.3 })));
+
+    function loop(t) {
+      requestAnimationFrame(loop);
+      const s = t * 0.001;
+      ico.rotation.y = s * 0.5;
+      ico.rotation.x = s * 0.3;
+      rings.forEach((r, i) => {
+        r.rotation.z = s * (0.3 + i * 0.1);
+        r.rotation.x = s * 0.15 + r.userData.phase;
+      });
+      ren.render(sc, cam);
+    }
+    loop(0);
+  }
+  </script>
+</body>
+</html>
